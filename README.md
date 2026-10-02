@@ -440,7 +440,104 @@ Different motif / identity
 ```
 
 The combination of strong color augmentation and contrastive learning explicitly discourages the network from depending on palette information.
+---
+## Results
 
+The model was evaluated on the held-out test split using three complementary protocols:
+
+1. **Cross-image identification** — retrieve the correct identity from a gallery using a different image.
+2. **Color-invariance / self-retrieval** — verify whether the original photograph remains the top match after recoloring.
+3. **Verification** — distinguish same-design recolored pairs from different-design pairs using a threshold selected only on the validation split.
+
+### 1. Cross-Image Identification
+
+The test set contains **60 images** across four saree identities. For cross-image retrieval, the test set was split into a seeded gallery of 29 images and 31 query images.
+
+| Query Variant | Gallery | Rank-1 | Rank-5 | mAP |
+|---|---|---:|---:|---:|
+| Original | Original | **80.65%** | 90.32% | 76.82% |
+| Hue +90° | Original | 77.42% | 90.32% | 75.00% |
+| Hue -90° | Original | 74.19% | 93.55% | 77.39% |
+| Hue 180° | Original | **80.65%** | **96.77%** | 79.38% |
+| Saturation reduced | Original | 80.65% | 93.55% | 77.60% |
+| Grayscale | Original | 74.19% | 93.55% | 76.61% |
+
+The model maintains substantial retrieval performance even when the query appearance is modified by strong hue, saturation, or grayscale transformations.
+
+### 2. Self-Retrieval Under Recoloring
+
+A stronger test of color invariance is to recolor each test image and check whether the **same original photograph remains its Rank-1 match**.
+
+| Variant | Self Rank-1 | Mean Cosine Similarity |
+|---|---:|---:|
+| Original | **100.00%** | 1.000 |
+| Hue +90° | **96.67%** | 0.871 |
+| Hue -90° | 93.33% | 0.891 |
+| Hue 180° | **96.67%** | 0.863 |
+| Saturation reduced | **100.00%** | 0.956 |
+| Grayscale | **98.33%** | 0.903 |
+
+These results show that the learned embedding remains highly consistent under substantial appearance changes. In particular, the model retains **96.67% Rank-1 self-retrieval under a 90° hue shift** and **98.33% under grayscale conversion**.
+
+### 3. Verification
+
+For verification, the threshold was selected using the **validation split only** and then frozen for test evaluation.
+
+| Pair Protocol | ROC-AUC | EER | TAR @ 1% FAR | Accuracy @ Valid Threshold | Threshold |
+|---|---:|---:|---:|---:|---:|
+| Recolor vs. Other Identity | **0.9994** | **2.50%** | **98.33%** | **98.33%** | 0.3356 |
+| Cross-Photo vs. Other Identity | 0.8758 | 18.33% | 6.67% | 81.67% | 0.0649 |
+
+The recolor-vs-other protocol directly evaluates the intended use case: determining whether a recolored image belongs to the same design identity. The model achieves **0.9994 ROC-AUC**, **2.5% EER**, and **98.33% TAR at 1% FAR** on this test protocol.
+
+### 4. Training and Invariance
+
+The best checkpoint was selected using the validation invariance score rather than the test set.
+
+| Metric | Result |
+|---|---:|
+| Training epochs | 10 |
+| Best epoch | **10** |
+| Best validation invariance score | **0.9326** |
+| Final training loss | 0.711 |
+| Embedding dimension | 128 |
+
+The validation invariance score improved from **0.727 at epoch 1** to **0.933 at epoch 10**, while the training loss decreased from **4.552 to 0.711**.
+
+### 5. Model Efficiency
+
+The embedding network is intentionally lightweight to support practical deployment.
+
+| Metric | Result |
+|---|---:|
+| Backbone | MobileNetV3-Small |
+| Embedding dimension | **128** |
+| Input resolution | **224 × 224** |
+| Inference parameters | **1,000,992** |
+| Parameters including ArcFace head | 1,001,504 |
+| FLOPs / image | **109.9M** |
+| Batch-1 latency | **4.884 ms** |
+| Batch-32 latency | **7.333 ms** |
+| Per-image latency at batch 32 | **0.229 ms** |
+| Evaluation GPU | NVIDIA Tesla T4 |
+
+The ArcFace classification head is used only during training and is **not included in the inference parameter count**. Deployment therefore requires only the lightweight embedding network.
+
+### Results Summary
+
+The main results are:
+
+- **80.65% cross-image Rank-1** identification accuracy on original queries.
+- **77.42% Rank-1** under a +90° hue shift.
+- **96.67% self-Rank-1** under +90° hue recoloring.
+- **98.33% self-Rank-1** under grayscale conversion.
+- **0.9994 ROC-AUC** for recolored-vs-other verification.
+- **2.50% EER** for recolored-vs-other verification.
+- **98.33% TAR @ 1% FAR** for recolored-vs-other verification.
+- **128-D embeddings** with approximately **1.0M inference parameters**.
+- Approximately **110M FLOPs/image** at 224×224 resolution.
+
+> **Note:** The reported identification results use a relatively small held-out test set (60 images, with 31 queries in the cross-image protocol). These results demonstrate the behavior of the proposed approach on this dataset, but should not be interpreted as a large-scale benchmark. Larger identity-balanced test sets and additional independently collected recolored samples would provide a stronger evaluation.
 ---
 
 ## Limitations
