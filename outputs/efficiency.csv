@@ -1,0 +1,11 @@
+item,value
+inference_parameters,1000992
+parameters_with_arcface_head,1001504
+embedding_dim,128
+input,224
+latency_ms_batch1,4.884
+latency_ms_batch32,7.333
+latency_ms_per_image_batch32,0.229
+flops_one_image,109940608
+best_epoch,10
+device,cuda
