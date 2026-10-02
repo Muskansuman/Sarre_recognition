@@ -514,28 +514,6 @@ Potential extensions:
 - Large-scale gallery indexing
 
 ---
-
-## Citation
-
-If you use this project in research or an engineering report, cite the repository and the underlying dataset.
-
-```bibtex
-@misc{color_invariant_saree_recognition,
-  title  = {Color-Invariant Saree Design Recognition},
-  author = {Arashdeep Singh},
-  year   = {2026},
-  note   = {Metric learning for color-invariant saree pattern retrieval}
-}
-```
-
----
-
-## License
-
-Add the license that applies to your code and verify the dataset's license separately before redistributing the dataset or derived assets.
-
----
-
 ## Summary
 
 This project demonstrates a compact metric-learning system that converts saree images into **color-invariant visual embeddings** and uses those embeddings for retrieval and verification.
